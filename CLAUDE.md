@@ -39,6 +39,7 @@ tests/
 - `python data/generer_donnees.py` : crée les données fictives si `data/` est vide.
 - `python main.py` : traite les 10 demandes.
 - `python revue.py` : ouvre la page locale de relecture (127.0.0.1:8765) où le service commercial valide ou rejette chaque brouillon. La décision va dans `out/decisions.json`, un brouillon validé est copié dans `out/valides/` ; rien n'est envoyé.
+- `python lancer_cas_de_test.py [n° ...]` : exécute les 10 cas de la fiche de cadrage (`tests/cas_de_test.json`) et affiche pour chacun le sujet, l'entrée, la sortie, le résultat attendu et les vérifications (appelle le modèle ; `--garder` conserve les fichiers dans `out/cas_de_test/`).
 - `pytest -q` : lance les tests.
 
 ## Règles impératives (non négociables)

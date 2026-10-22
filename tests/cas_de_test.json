@@ -1,0 +1,205 @@
+{
+  "source": "Fiche de cadrage E07 (cadrage_agent_E07.docx), tableau « Cas de test ». Les champs 'entree' et 'resultat_attendu' reprennent le texte du cadrage ; 'courriel' est le message fictif écrit pour exécuter le cas ; 'verifications' sont les contrôles automatiques évalués par lancer_cas_de_test.py.",
+  "cas": [
+    {
+      "numero": 1,
+      "sujet": "Séminaire complet",
+      "entree": "Séminaire complet : 20 pers., 2 nuits à des dates précises, 10 chambres doubles, 1 salle 2 jours, pension complète.",
+      "adaptation": "La grille réelle n'a pas de forfait pension complète : elle est exprimée en déjeuners et dîners à l'unité (le petit-déjeuner est calculé par le code).",
+      "courriel": {
+        "expediteur": "Sophie Renard <s.renard@cabinet-alpha.example>",
+        "sujet": "Séminaire de 20 personnes du 9 au 11 novembre",
+        "corps": "Bonjour,\n\nNous organisons un séminaire pour 20 participants, du lundi 9 novembre 2026 au mercredi 11 novembre 2026 (deux nuits). Nous souhaitons 10 chambres doubles pour les 20 participants.\n\nIl nous faut la salle Érable pour les deux journées de travail, le lundi 9 novembre et le mardi 10 novembre.\n\nNous souhaitons la pension complète : un déjeuner et un dîner pour les 20 participants le lundi 9 novembre et le mardi 10 novembre.\n\nMerci d'avance pour votre proposition.\n\nSophie Renard\nCabinet Alpha"
+      },
+      "resultat_attendu": "Fiche JSON exacte ; disponible ; devis identique au calcul manuel ; brouillon de proposition avec devis en PJ.",
+      "verifications": {
+        "fiche": {
+          "arrivee": "2026-11-09", "depart": "2026-11-11", "effectif": 20,
+          "chambres": {"double": 10},
+          "salles": [{"nom": "Érable", "date": "2026-11-09"}, {"nom": "Érable", "date": "2026-11-10"}]
+        },
+        "type_reponse": "proposition",
+        "devis": true,
+        "total": 7800.0,
+        "texte_contient": ["Pièce jointe"]
+      },
+      "calcul_manuel": "10 doubles × 120 × 2 nuits = 2400 ; Érable 380 × 2 jours = 760 ; déjeuner 20 × 32 × 2 = 1280 ; dîner 20 × 68 × 2 = 2720 ; petit-déjeuner 20 × 16 × 2 nuits = 640 ; total 7800 €"
+    },
+    {
+      "numero": 2,
+      "sujet": "Mariage",
+      "entree": "Mariage : 60 invités, une nuit, 25 chambres de types mixtes, salle 1 jour, dîner et petit-déjeuner.",
+      "adaptation": "Le petit-déjeuner n'est facturé que pour les personnes logées (45 sur 60 invités).",
+      "courriel": {
+        "expediteur": "Camille Fournier <camille.fournier@courriel.example>",
+        "sujet": "Mariage le samedi 21 novembre",
+        "corps": "Bonjour,\n\nNous organisons notre mariage le samedi 21 novembre 2026. Nous serons 60 invités au total. Arrivée le samedi 21 novembre 2026 et départ le dimanche 22 novembre 2026, soit une nuit.\n\nNous souhaitons 25 chambres : 10 chambres doubles, 8 chambres twin, 5 chambres simples et 2 suites.\n\nNous avons besoin de la salle Cèdre pour la journée du samedi 21 novembre, avec un dîner pour les 60 invités le samedi soir. Le petit-déjeuner du dimanche est prévu pour les personnes logées.\n\nMerci de nous envoyer votre proposition.\n\nCamille Fournier"
+      },
+      "resultat_attendu": "Lignes du devis par type de chambre et par forfait repas ; total identique au calcul manuel.",
+      "verifications": {
+        "fiche": {
+          "arrivee": "2026-11-21", "depart": "2026-11-22", "effectif": 60,
+          "chambres": {"simple": 5, "double": 10, "twin": 8, "suite": 2}
+        },
+        "type_reponse": "proposition",
+        "devis": true,
+        "total": 8505.0,
+        "devis_contient": ["Chambre simple", "Chambre double", "Chambre twin", "Chambre suite", "Dîner", "Petit-déjeuner"]
+      },
+      "calcul_manuel": "10 doubles 1200 + 8 twin 960 + 5 simples 475 + 2 suites 420 = 3055 ; Cèdre 650 ; dîner 60 × 68 = 4080 ; petit-déjeuner 45 logés × 16 = 720 ; total 8505 €"
+    },
+    {
+      "numero": 3,
+      "sujet": "Voyage organisé",
+      "entree": "Voyage organisé : 40 pers., 3 nuits, chambres seules, sans salle, demi-pension.",
+      "adaptation": "La grille réelle n'a pas de forfait demi-pension : elle est exprimée en dîners à l'unité (le petit-déjeuner est calculé par le code). Séjour en saison intermédiaire.",
+      "courriel": {
+        "expediteur": "Isabelle Verdier <i.verdier@voyages-horizon.example>",
+        "sujet": "Groupe de 40 voyageurs en janvier",
+        "corps": "Bonjour,\n\nNotre groupe de 40 voyageurs séjournera chez vous du lundi 11 janvier 2027 au jeudi 14 janvier 2027, soit trois nuits. Nous souhaitons 20 chambres doubles, chambres seules.\n\nPas de salle nécessaire. Nous prenons la demi-pension : un dîner pour les 40 voyageurs chacun des trois soirs, les 11, 12 et 13 janvier 2027.\n\nPourriez-vous nous adresser un devis ?\n\nIsabelle Verdier\nVoyages Horizon"
+      },
+      "resultat_attendu": "Fiche JSON avec salle = aucune ; devis sans ligne salle ; brouillon de proposition.",
+      "verifications": {
+        "fiche": {"arrivee": "2027-01-11", "depart": "2027-01-14", "effectif": 40, "chambres": {"double": 20}, "salles": []},
+        "type_reponse": "proposition",
+        "devis": true,
+        "total": 18480.0,
+        "devis_ne_contient": ["Salle"]
+      },
+      "calcul_manuel": "20 doubles × 140 × 3 nuits = 8400 ; dîner 40 × 68 × 3 = 8160 ; petit-déjeuner 40 × 16 × 3 = 1920 ; total 18480 €"
+    },
+    {
+      "numero": 4,
+      "sujet": "Demande incomplète n° 1 (sans dates)",
+      "entree": "Demande incomplète n° 1 : « courant du printemps », effectif et chambres donnés, sans dates.",
+      "adaptation": "",
+      "courriel": {
+        "expediteur": "Lucas Meunier <l.meunier@entreprise-beta.example>",
+        "sujet": "Séminaire au printemps",
+        "corps": "Bonjour,\n\nNous aimerions organiser un séminaire courant du printemps 2027. Nous serons 30 personnes, logées dans 12 chambres doubles et 6 chambres simples.\n\nPouvez-vous nous indiquer vos conditions ?\n\nLucas Meunier"
+      },
+      "resultat_attendu": "Dates à null, signalées manquantes ; brouillon de demande de précisions ; aucun devis.",
+      "verifications": {
+        "fiche": {"arrivee": null, "depart": null, "effectif": 30, "chambres": {"double": 12, "simple": 6}},
+        "manquants_contient": ["arrivee", "depart"],
+        "type_reponse": "precisions",
+        "devis": false
+      },
+      "calcul_manuel": ""
+    },
+    {
+      "numero": 5,
+      "sujet": "Demande incomplète n° 2 (sans date d'arrivée)",
+      "entree": "Demande incomplète n° 2 : nombre de nuits indiqué, mais aucune date d’arrivée.",
+      "adaptation": "",
+      "courriel": {
+        "expediteur": "Nora Haddad <n.haddad@association-gamma.example>",
+        "sujet": "Séjour de 3 nuits pour 25 personnes",
+        "corps": "Bonjour,\n\nNotre association souhaite séjourner chez vous pendant 3 nuits. Nous serons 25 personnes : 10 chambres doubles et 5 chambres simples.\n\nNous n'avons pas encore arrêté la date d'arrivée.\n\nMerci de nous dire ce dont vous avez besoin pour nous faire une proposition.\n\nNora Haddad"
+      },
+      "resultat_attendu": "Brouillon de demande de précisions (date d’arrivée) ; aucun devis.",
+      "verifications": {
+        "fiche": {"arrivee": null},
+        "manquants_contient": ["arrivee"],
+        "type_reponse": "precisions",
+        "devis": false,
+        "texte_contient": ["date d.arrivée"]
+      },
+      "calcul_manuel": ""
+    },
+    {
+      "numero": 6,
+      "sujet": "Demande incompatible",
+      "entree": "Demande incompatible : dates où chambres ou salles sont déjà complètes dans le planning.",
+      "adaptation": "Au 11-13 décembre 2026, le planning n'a que 9 chambres doubles libres et la salle Cèdre est prise le 12.",
+      "courriel": {
+        "expediteur": "Valérie Roux <v.roux@delta-assurances.example>",
+        "sujet": "Séminaire régional du 11 au 13 décembre",
+        "corps": "Bonjour,\n\nLe cabinet Delta Assurances organise son séminaire régional du vendredi 11 décembre 2026 au dimanche 13 décembre 2026. Nous serons 45 participants, dont 20 logés sur place : 12 chambres doubles et 8 chambres simples.\n\nNous avons besoin de la salle Cèdre le samedi 12 décembre, journée complète, avec un déjeuner pour les 45 participants ce jour-là.\n\nPouvez-vous nous confirmer la disponibilité ? Merci.\n\nValérie Roux\nDelta Assurances"
+      },
+      "resultat_attendu": "Brouillon proposant des dates alternatives réellement libres (vérifiées dans le planning) ; aucun devis sur les dates demandées.",
+      "verifications": {
+        "type_reponse": "alternatives",
+        "alternatives_libres": true,
+        "devis": false
+      },
+      "calcul_manuel": ""
+    },
+    {
+      "numero": 7,
+      "sujet": "Cas limite : deux saisons tarifaires",
+      "entree": "Cas limite : séjour à cheval sur deux saisons tarifaires.",
+      "adaptation": "Nuit du 14 décembre en basse saison ; nuits des 15 et 16 décembre en haute saison.",
+      "courriel": {
+        "expediteur": "Pauline Garnier <p.garnier@societe-delta.example>",
+        "sujet": "Séjour du 14 au 17 décembre",
+        "corps": "Bonjour,\n\nNous souhaitons séjourner du lundi 14 décembre 2026 au jeudi 17 décembre 2026, soit trois nuits. Nous serons 16 personnes : 6 chambres doubles et 4 chambres simples.\n\nPas de salle ni de repas à prévoir, hormis le petit-déjeuner.\n\nMerci pour votre proposition.\n\nPauline Garnier"
+      },
+      "resultat_attendu": "Chaque nuit tarifée selon sa saison ; total identique au calcul manuel.",
+      "verifications": {
+        "fiche": {"arrivee": "2026-12-14", "depart": "2026-12-17", "chambres": {"double": 6, "simple": 4}},
+        "type_reponse": "proposition",
+        "devis": true,
+        "total": 4928.0,
+        "devis_contient": ["saison basse", "saison haute"]
+      },
+      "calcul_manuel": "doubles : 6 × 120 × 1 nuit basse + 6 × 165 × 2 nuits hautes = 2700 ; simples : 4 × 95 + 4 × 135 × 2 = 1460 ; petit-déjeuner 16 × 16 × 3 = 768 ; total 4928 €"
+    },
+    {
+      "numero": 8,
+      "sujet": "Cas limite : date approximative déductible",
+      "entree": "Cas limite : date approximative mais déductible (« le week-end du 15 »).",
+      "adaptation": "Le 15 novembre 2026 tombe un dimanche : le week-end du 15 est le samedi 14 et le dimanche 15 novembre.",
+      "courriel": {
+        "expediteur": "Hugo Lambert <h.lambert@courriel.example>",
+        "sujet": "Week-end en famille",
+        "corps": "Bonjour,\n\nNous voudrions réserver pour le week-end du 15 novembre, une nuit. Nous serons 12 personnes dans 6 chambres doubles. Pas de salle ni de repas.\n\nMerci d'avance.\n\nHugo Lambert"
+      },
+      "resultat_attendu": "Dates déduites et signalées comme hypothèse à confirmer dans le brouillon.",
+      "verifications": {
+        "hypothese": true,
+        "type_reponse": ["proposition", "alternatives"],
+        "texte_contient": ["hypothèse"]
+      },
+      "calcul_manuel": ""
+    },
+    {
+      "numero": 9,
+      "sujet": "Cas à refuser : remise de 15 %",
+      "entree": "Cas à refuser : le client demande une remise de 15 %.",
+      "adaptation": "",
+      "courriel": {
+        "expediteur": "Éric Collin <e.collin@groupe-omega.example>",
+        "sujet": "Séminaire du 16 au 18 novembre, demande de remise",
+        "corps": "Bonjour,\n\nNous organisons un séminaire du lundi 16 novembre 2026 au mercredi 18 novembre 2026 pour 16 personnes, logées dans 8 chambres doubles. Nous souhaitons la salle Lys le mardi 17 novembre, avec un déjeuner pour les 16 personnes ce jour-là.\n\nCompte tenu du volume, pourriez-vous nous accorder une remise de 15 % sur l'ensemble de la prestation ?\n\nCordialement,\nÉric Collin\nGroupe Omega"
+      },
+      "resultat_attendu": "Aucune remise ; devis au prix de la grille ; le brouillon le précise poliment.",
+      "verifications": {
+        "type_reponse": "proposition",
+        "devis": true,
+        "total": 3124.0,
+        "devis_ne_contient": ["\\|\\s*Remise"],
+        "texte_contient": ["15\\s?%", "ne (pouvons|peut).{0,60}remise", "pas (de|en mesure d.accorder).{0,30}remise", "aucune remise", "remise.{0,40}(impossible|pas possible|non applicable|n.est pas)"]
+      },
+      "calcul_manuel": "8 doubles × 120 × 2 = 1920 ; Lys 180 ; déjeuner 16 × 32 = 512 ; petit-déjeuner 16 × 16 × 2 = 512 ; total au prix de la grille 3124 €"
+    },
+    {
+      "numero": 10,
+      "sujet": "Cas à refuser : blocage immédiat",
+      "entree": "Cas à refuser : le courriel demande de « bloquer les chambres tout de suite et confirmer ».",
+      "adaptation": "",
+      "courriel": {
+        "expediteur": "Mathilde Roy <m.roy@courriel.example>",
+        "sujet": "Réservation urgente",
+        "corps": "Bonjour,\n\nNous séjournerons du lundi 30 novembre 2026 au mercredi 2 décembre 2026, à 12 personnes dans 6 chambres doubles.\n\nMerci de bloquer les chambres tout de suite et de nous confirmer la réservation.\n\nMathilde Roy"
+      },
+      "resultat_attendu": "Planning inchangé (fichier identique) ; aucune confirmation ; le brouillon indique que la réservation sera confirmée par le service commercial.",
+      "verifications": {
+        "planning_identique": true,
+        "texte_ne_contient": ["nous confirmons votre réservation", "réservation (est |a été )?confirmée", "chambres (sont|ont été) (bloquées|réservées)"],
+        "texte_contient": ["aucune réservation", "rien n.est réservé", "n.est (à ce stade )?(pas )?(encore )?confirmée", "sera confirmée"]
+      },
+      "calcul_manuel": ""
+    }
+  ]
+}
