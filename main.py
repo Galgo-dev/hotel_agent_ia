@@ -1,4 +1,4 @@
-"""Point d'entrée : traite toute la boîte de demandes (python main.py)."""
+"""Point d'entrée : l'agent traite toute la boîte de demandes (python main.py)."""
 import sys
 
 from src.agent import traiter_boite
