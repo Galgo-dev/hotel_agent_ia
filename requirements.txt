@@ -1,3 +1,4 @@
 anthropic
 python-dotenv
 pytest
+mcp>=2.3,<3

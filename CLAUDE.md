@@ -13,7 +13,8 @@ Il ne réserve rien et n'envoie rien : le service commercial relit chaque brouil
 
 ## Stack
 - Python 3.11+, sans framework.
-- SDK `anthropic` pour l'extraction et la rédaction. Le modèle est lu dans `.env` (`MODEL`) ; la clé est dans `ANTHROPIC_API_KEY`. Ne jamais écrire la clé dans le code.
+- SDK `anthropic` pour l'agent (extraction, choix des outils, rédaction). Le modèle est lu dans `.env` (`MODEL`) ; la clé est dans `ANTHROPIC_API_KEY`. Ne jamais écrire la clé dans le code.
+- SDK `mcp` 2.x (`mcp>=2.3,<3`) : serveur MCP local (`MCPServer`, transport stdio) qui expose les outils, et agent client (`Client`). Dans le SDK 2.x, seule une `ToolError` transmet son message au modèle : les outils lèvent `ToolError` pour tout refus prévu.
 - Données : SQLite (planning), JSON (grille tarifaire), fichiers `.txt` (courriels).
 - Tests : `pytest`.
 
