@@ -49,7 +49,7 @@ def charger_grille() -> dict:
     """Lit grille_tarifaire.md et renvoie saisons, chambres, salles et repas."""
     texte = GRILLE.read_text(encoding="utf-8")
     saisons = {_norm(c[0]): _parse_periode(c[1]) for c in _lignes_tableau(texte, "Saisons")}
-    chambres = {_norm(c[0]): {"personnes": int(c[2]), "prix": dict(zip(("basse", "haute", "intermediaire"), map(float, c[3:6])))}
+    chambres = {_norm(c[0]): {"capacite": int(c[1]), "personnes": int(c[2]), "prix": dict(zip(("basse", "haute", "intermediaire"), map(float, c[3:6])))}
                 for c in _lignes_tableau(texte, "Chambres (prix par chambre et par nuit, petit-déjeuner exclu)")}
     salles = {_norm(c[0]): {"nom": c[0], "prix": float(c[2])}
               for c in _lignes_tableau(texte, "Salles de séminaire (à la journée, hors repas)")}
@@ -66,7 +66,7 @@ def saison_de(nuit: date) -> str:
     raise ValueError(f"La nuit du {nuit} n'est couverte par aucune saison de la grille")
 
 
-def _dates_sejour(fiche: dict) -> tuple[date, date]:
+def dates_sejour(fiche: dict) -> tuple[date, date]:
     """Valide les champs obligatoires et renvoie (arrivée, départ)."""
     manquants = [c for c in ("arrivee", "depart") if not fiche.get(c)]
     if not fiche.get("effectif"):
@@ -85,7 +85,7 @@ def _ligne(libelle: str, quantite: int, prix: float) -> dict:
 
 def calculer_devis(fiche: dict) -> dict:
     """Calcule les lignes et le total du devis ; lève DemandeIncomplete si dates ou effectif manquent."""
-    arrivee, depart = _dates_sejour(fiche)
+    arrivee, depart = dates_sejour(fiche)
     grille = charger_grille()
     nuits = [arrivee + timedelta(days=i) for i in range((depart - arrivee).days)]
     lignes, logees = [], 0
