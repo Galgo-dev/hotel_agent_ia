@@ -38,6 +38,7 @@ tests/
 ## Commandes
 - `python data/generer_donnees.py` : crée les données fictives si `data/` est vide.
 - `python main.py` : traite les 10 demandes.
+- `python revue.py` : ouvre la page locale de relecture (127.0.0.1:8765) où le service commercial valide ou rejette chaque brouillon. La décision va dans `out/decisions.json`, un brouillon validé est copié dans `out/valides/` ; rien n'est envoyé.
 - `pytest -q` : lance les tests.
 
 ## Règles impératives (non négociables)
