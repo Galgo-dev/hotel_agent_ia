@@ -43,6 +43,7 @@ def test_fiche_complete_normalisee():
 def test_sans_dates_champs_manquants():
     fiche = valider_fiche(brut(arrivee=None, depart=None), DEMANDE)
     assert fiche["champs_manquants"] == ["arrivee", "depart"]
+    assert valider_fiche(brut(arrivee=None, depart=None, hypothese=True), DEMANDE)["hypothese"] is False
 
 
 def test_depart_absent():

@@ -91,7 +91,7 @@ def valider_fiche(brut: dict, demande: dict) -> dict:
     return {
         "id": demande["id"], "client": str(brut.get("client") or ""),
         "type_evenement": type_evenement if type_evenement in TYPES_EVENEMENT else "autre",
-        "arrivee": arrivee, "depart": depart, "hypothese": bool(brut.get("hypothese")), "effectif": effectif,
+        "arrivee": arrivee, "depart": depart, "hypothese": bool(brut.get("hypothese")) and bool(arrivee), "effectif": effectif,
         "chambres": {t: _entier(chambres.get(t)) for t in TYPES_CHAMBRE},
         "salles": salles, "repas": repas, "champs_manquants": manquants,
     }
