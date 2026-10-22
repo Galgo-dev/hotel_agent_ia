@@ -5,32 +5,13 @@ import anthropic
 from dotenv import load_dotenv
 
 from src.brouillons import SORTIE, ecrire_brouillon, ecrire_fiche, rediger_corps
-from src.devis import DemandeIncomplete, calculer_devis, devis_markdown
+from src.devis import devis_markdown
 from src.extraction import extraire_fiche
 from src.mailbox import lire_demandes
-from src.planning import chercher_dates_alternatives, consulter_disponibilites
+from src.outils import analyser, montant_fr as _montant
 
 LIBELLES_MANQUANTS = {"arrivee": "la date d'arrivée", "depart": "la date de départ", "effectif": "le nombre de personnes",
                       "salles.date": "la ou les dates d'utilisation de la salle", "repas.date": "la ou les dates des repas"}
-
-
-def _montant(valeur: float) -> str:
-    """Formate un montant à la française : 9 346,00 €."""
-    return f"{valeur:,.2f}".replace(",", " ").replace(".", ",") + " €"
-
-
-def analyser(fiche: dict) -> dict:
-    """Choisit le type de réponse et rassemble devis, conflits et alternatives."""
-    if not fiche["champs_manquants"]:
-        try:
-            dispo = consulter_disponibilites(fiche)
-            if dispo["disponible"]:
-                return {"type": "proposition", "devis": calculer_devis(fiche)}
-            return {"type": "alternatives", "conflits": dispo["conflits"],
-                    "alternatives": chercher_dates_alternatives(fiche)}
-        except DemandeIncomplete:
-            pass
-    return {"type": "precisions"}
 
 
 def construire_faits(fiche: dict, analyse: dict) -> tuple[dict, set[str]]:
