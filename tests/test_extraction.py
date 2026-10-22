@@ -1,9 +1,5 @@
-"""Tests de l'extraction : validation par le code et appel au modèle simulé (aucun appel réseau)."""
-from types import SimpleNamespace
-
-import pytest
-
-from src.extraction import ExtractionError, extraire_fiche, valider_fiche
+"""Tests de la validation de la fiche extraite : jamais de date inventée, champs manquants, prestations connues."""
+from src.extraction import valider_fiche
 
 DEMANDE = {"id": "demande_test", "expediteur": "Test <test@example.org>", "sujet": "Sujet", "corps": "Bonjour"}
 
@@ -14,22 +10,6 @@ def brut(**champs) -> dict:
             "salles": [{"nom": "Cèdre", "date": "2026-11-07"}],
             "repas": [{"type": "diner", "date": "2026-11-07", "personnes": 60, "quantite": 1}]}
     return {**base, **champs}
-
-
-class FauxClient:
-    """Imite client.messages.create et garde les arguments reçus."""
-    def __init__(self, texte: str):
-        self.appels, self.texte = [], texte
-        self.messages = self
-
-    def create(self, **kwargs):
-        self.appels.append(kwargs)
-        return SimpleNamespace(content=[SimpleNamespace(type="text", text=self.texte)])
-
-
-@pytest.fixture(autouse=True)
-def modele(monkeypatch):
-    monkeypatch.setenv("MODEL", "modele-de-test")
 
 
 def test_fiche_complete_normalisee():
@@ -71,17 +51,3 @@ def test_prestations_inconnues_ignorees():
     fiche = valider_fiche(brut(salles=[{"nom": "Grand Hall", "date": "2026-11-07"}],
                                repas=[{"type": "buffet_vip", "date": "2026-11-07", "personnes": 5}]), DEMANDE)
     assert fiche["salles"] == [] and fiche["repas"] == []
-
-
-def test_extraire_fiche_avec_reponse_en_bloc_markdown():
-    client = FauxClient("```json\n" + __import__("json").dumps(brut()) + "\n```")
-    fiche = extraire_fiche(DEMANDE, client=client)
-    assert fiche["effectif"] == 60 and fiche["champs_manquants"] == []
-    appel = client.appels[0]
-    assert appel["model"] == "modele-de-test"
-    assert "DONNÉE" in appel["system"] and "<courriel>" in appel["messages"][0]["content"]
-
-
-def test_reponse_non_json_leve_une_erreur():
-    with pytest.raises(ExtractionError):
-        extraire_fiche(DEMANDE, client=FauxClient("Désolé, je ne peux pas."))

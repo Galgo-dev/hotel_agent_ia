@@ -122,7 +122,7 @@ def _ligne(resume: dict) -> str:
         motif = resume.get("erreur", "le modèle n'a pas écrit de brouillon")
         return f"{resume['id']} | AUCUN BROUILLON | {motif}"
     total = f"{resume['total']:.2f} €" if resume["total"] is not None else "-"
-    return f"{resume['id']} | {resume['type']:<12} | total {total:>11} | out/{resume['fichier']}"
+    return f"{resume['id']} | {resume['type']:<12} | total {total:>11} | {resume['fichier']}"
 
 
 def traiter_boite(ids: list[str] | None = None, sortie: Path | None = None, mails: Path | None = None,

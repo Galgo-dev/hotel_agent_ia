@@ -3,7 +3,8 @@
 Pour chaque cas : sujet, entrée, sortie obtenue, résultat attendu et vérifications.
 Usage : python lancer_cas_de_test.py [numéros de cas...] [--garder]
   --garder : conserve les fichiers produits dans out/cas_de_test/ (sinon dossier temporaire supprimé).
-Appelle le modèle (extraction et rédaction) : MODEL et ANTHROPIC_API_KEY doivent être définis dans .env.
+L'agent (client MCP) traite les 10 courriels avec le serveur MCP local : plusieurs appels au modèle par cas.
+MODEL et ANTHROPIC_API_KEY doivent être définis dans .env.
 """
 import hashlib
 import json
@@ -13,12 +14,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-import anthropic
-from dotenv import load_dotenv
-
-from src.agent import traiter_demande
+from src.agent import traiter_boite
 from src.brouillons import SORTIE
-from src.planning import PLANNING_CHAMBRES, PLANNING_SALLES, consulter_disponibilites
+from src.planning import PLANNING_CHAMBRES, PLANNING_SALLES, consulter_disponibilites, decaler_fiche
 
 FICHIER_CAS = Path(__file__).resolve().parent / "tests" / "cas_de_test.json"
 LARGEUR = 78
@@ -29,20 +27,33 @@ def empreintes() -> list[str]:
     return [hashlib.sha256(p.read_bytes()).hexdigest() for p in (PLANNING_CHAMBRES, PLANNING_SALLES)]
 
 
-def executer(cas: dict, client, sortie: Path) -> dict:
-    """Fait traiter le courriel du cas par l'agent et rassemble tout ce qui a été produit."""
-    courriel = cas["courriel"]
-    demande = {"id": f"cas_{cas['numero']:02d}", "expediteur": courriel["expediteur"],
-               "sujet": courriel["sujet"], "corps": courriel["corps"]}
-    avant = empreintes()
-    resume = traiter_demande(demande, client, sortie=sortie)
-    devis = sortie / "devis" / f"{demande['id']}.md"
+def id_cas(cas: dict) -> str:
+    return f"cas_{cas['numero']:02d}"
+
+
+def ecrire_courriel(cas: dict, mails: Path) -> None:
+    """Dépose le courriel du cas dans la boîte de test temporaire lue par le serveur MCP."""
+    c = cas["courriel"]
+    (mails / f"{id_cas(cas)}_test.eml").write_text(
+        f"From: {c['expediteur']}\nTo: Service commercial <reservations@grand-cedre.example>\n"
+        f"Subject: {c['sujet']}\n\n{c['corps']}\n", encoding="utf-8")
+
+
+def recueillir(cas: dict, resume: dict, sortie: Path, planning_identique: bool) -> dict:
+    """Rassemble ce que l'agent a produit pour le cas ; lève une erreur si la fiche ou le brouillon manquent."""
+    id_ = id_cas(cas)
+    if resume.get("erreur"):
+        raise RuntimeError(resume["erreur"])
+    fiche = sortie / "fiches" / f"{id_}.json"
+    if not fiche.exists() or not resume["fichier"]:
+        raise RuntimeError("l'agent n'a pas enregistré de fiche ou n'a pas écrit de brouillon")
+    devis = sortie / "devis" / f"{id_}.md"
     return {
         "resume": resume,
-        "fiche": json.loads((sortie / "fiches" / f"{demande['id']}.json").read_text(encoding="utf-8")),
-        "brouillon": Path(resume["fichier"]).read_text(encoding="utf-8"),
+        "fiche": json.loads(fiche.read_text(encoding="utf-8")),
+        "brouillon": (sortie / resume["fichier"]).read_text(encoding="utf-8"),
         "devis": devis.read_text(encoding="utf-8") if devis.exists() else None,
-        "planning_identique": empreintes() == avant,
+        "planning_identique": planning_identique,
     }
 
 
@@ -76,8 +87,9 @@ def verifier(spec: dict, res: dict) -> list[tuple[bool, str]]:
         controles.append((fiche["hypothese"] == spec["hypothese"], f"hypothese = {spec['hypothese']}"))
     if spec.get("alternatives_libres"):
         alternatives = resume["alternatives"]
-        controles.append((bool(alternatives) and all(consulter_disponibilites(a)["disponible"] for a in alternatives),
-                          f"{len(alternatives)} alternative(s), toutes libres dans le planning"))
+        libres = bool(alternatives) and all(
+            consulter_disponibilites(decaler_fiche(fiche, a["decalage_jours"]))["disponible"] for a in alternatives)
+        controles.append((libres, f"{len(alternatives)} alternative(s), toutes libres dans le planning"))
     for motif in spec.get("devis_contient", []):
         controles.append((devis is not None and re.search(motif, devis, re.I) is not None, f"devis contient /{motif}/"))
     for motif in spec.get("devis_ne_contient", []):
@@ -146,16 +158,24 @@ def main() -> None:
     cas_a_lancer = [c for c in json.loads(FICHIER_CAS.read_text(encoding="utf-8"))["cas"]
                     if not numeros or c["numero"] in numeros]
 
-    load_dotenv()
-    client = anthropic.Anthropic()
     racine = SORTIE / "cas_de_test" if garder else Path(tempfile.mkdtemp(prefix="cas_de_test_"))
-    print(f"Exécution de {len(cas_a_lancer)} cas (appels au modèle). Fichiers produits dans : {racine}")
+    mails, sortie = racine / "mails", racine / "out"
+    mails.mkdir(parents=True, exist_ok=True)
+    print(f"Exécution de {len(cas_a_lancer)} cas par l'agent MCP (appels au modèle). Fichiers produits dans : {racine}\n")
     resultats = {}
     try:
         for cas in cas_a_lancer:
+            ecrire_courriel(cas, mails)
+        avant = empreintes()
+        try:
+            resumes = {r["id"]: r for r in traiter_boite(ids=[id_cas(c) for c in cas_a_lancer], sortie=sortie, mails=mails)}
+        except Exception as e:  # MODEL ou clé absents, serveur MCP injoignable...
+            sys.exit(f"Exécution impossible : {type(e).__name__}: {e}")
+        identique = empreintes() == avant
+        for cas in cas_a_lancer:
             try:
-                res, erreur = executer(cas, client, racine / f"cas_{cas['numero']:02d}"), None
-            except Exception as e:  # un cas en échec ne doit pas empêcher les suivants
+                res, erreur = recueillir(cas, resumes[id_cas(cas)], sortie, identique), None
+            except Exception as e:  # un cas en échec ne doit pas empêcher l'affichage des autres
                 res, erreur = None, f"{type(e).__name__}: {e}"
             resultats[cas["numero"]] = afficher_cas(cas, res, erreur)
     finally:
